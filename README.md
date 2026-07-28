@@ -1,6 +1,8 @@
-# BES Access Portal v1.2.1
+# BES Access Portal v1.2.2
 
 Portal operativo estático y autocontenido para Best Linen Enterprise System.
+
+La portada ejecutiva integra la pieza institucional BLOS + SIGO-BL y la visión de futuro de Best Linen.
 
 ## Acceso de demostración
 
