@@ -1,0 +1,24 @@
+{
+  "version": "1.2.1",
+  "exportedAt": "2026-07-27T00:00:00.000Z",
+  "profile": {
+    "name": "Ale",
+    "role": "Encargado de almacén",
+    "email": "ale@bestlinen.com.mx"
+  },
+  "links": {
+    "SIGO_BL": "",
+    "BLOS": "",
+    "BL_RACKS": "",
+    "Odoo": ""
+  },
+  "tasks": [
+    {"id":"inbound","title":"Validar recibos y ubicaciones de Inbound","area":"Inbound","priority":"Alta","time":"09:30","done":false},
+    {"id":"inventory","title":"Ejecutar conteo cíclico y conciliar diferencias","area":"Inventarios","priority":"Alta","time":"11:00","done":false},
+    {"id":"outbound","title":"Confirmar surtido y liberación de Outbound","area":"Outbound","priority":"Alta","time":"13:00","done":false},
+    {"id":"racks","title":"Revisar movimientos pendientes en BL RACKS","area":"BL RACKS","priority":"Media","time":"15:00","done":false},
+    {"id":"control","title":"Entregar evidencias a Mesa de Control","area":"Mesa de Control","priority":"Media","time":"16:30","done":false},
+    {"id":"closing","title":"Completar cierre diario en SIGO-BL","area":"SIGO-BL","priority":"Alta","time":"18:00","done":false}
+  ],
+  "audit": []
+}
