@@ -5,7 +5,7 @@ import {
 
 const { createClient } = globalThis.supabase || {};
 
-const APP_VERSION = "1.9.1";
+const APP_VERSION = "1.9.2";
 const STORAGE_PREFIX = "besPortalState_v1_7_0";
 const MAX_BACKUP_BYTES = 1_000_000;
 const CONFIG_READY =
@@ -223,6 +223,7 @@ function createDefaultState(profile) {
   return {
     version: APP_VERSION,
     profile,
+    lastPage: "dashboard",
     tasks: structuredClone(DEFAULT_TASKS),
     links: { ...DEFAULT_LINKS },
     governance: defaultGovernance(),
@@ -239,6 +240,7 @@ function loadState(userId, profile) {
         ...saved,
         version: APP_VERSION,
         profile,
+        lastPage: Object.hasOwn(TITLES, saved.lastPage) ? saved.lastPage : "dashboard",
         links: normalizeLinks(saved.links),
         governance: normalizeGovernance(saved.governance),
         audit: normalizeAudit(saved.audit, profile.name),
@@ -486,6 +488,8 @@ function showPage(id) {
     button.classList.toggle("active", button.dataset.page === id),
   );
   select("#pageTitle").textContent = TITLES[id];
+  state.lastPage = id;
+  persist();
   select("#sidebar").classList.remove("open");
   window.scrollTo(0, 0);
   if (id === "users") void loadManagedUsers();
@@ -1098,7 +1102,12 @@ async function changePassword(event) {
 function enterPortal() {
   renderAll();
   showAuthSurface("appView");
-  showPage("dashboard");
+  const destination =
+    Object.hasOwn(TITLES, state.lastPage) &&
+    (state.lastPage !== "users" || isOwner())
+      ? state.lastPage
+      : "dashboard";
+  showPage(destination);
   if (isOwner()) void loadManagedUsers();
 }
 
