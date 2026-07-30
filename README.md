@@ -1,22 +1,27 @@
-# BES Access Portal v1.2.2
+# BES Access Portal
 
-Portal operativo estático y autocontenido para Best Linen Enterprise System.
+Portal de acceso del BLOS Enterprise System para Best Linen.
 
-La portada ejecutiva integra la pieza institucional BLOS + SIGO-BL y la visión de futuro de Best Linen.
+## Seguridad
 
-## Acceso de demostración
+- Autenticación real mediante Supabase; no existen credenciales de demostración en el repositorio.
+- Alta de usuarios únicamente desde el módulo del propietario.
+- Contraseña temporal de un solo uso con vencimiento de 24 a 72 horas.
+- Cambio obligatorio en el primer acceso bajo la política `BES-SEC-PWD-v1`.
+- MFA obligatorio para roles privilegiados.
+- Perfiles, membresías y datos institucionales protegidos mediante RLS y funciones autenticadas.
 
-- Usuario: `ale@bestlinen.com.mx`
-- Contraseña: `BES2026`
+La clave incluida en `assets/js/supabase-config.js` es publicable y apta para navegador. Nunca debe agregarse una clave `service_role` o secreta al repositorio.
 
-## Uso local
+## Alcance BES
 
-Abre `index.html` directamente en un navegador moderno. No requiere instalación ni servidor.
+El portal conserva los 14 pilares, las 22 secciones estándar por pilar, el mapa organizacional, la relación Odoo ↔ BL RACKS y el estándar documental de diez secciones.
 
-## GitHub Pages
+## Validación local
 
-El workflow incluido publica el contenido de la rama `main` automáticamente.
+```powershell
+node --check assets/js/app.js
+node tests/smoke.mjs
+```
 
-## Datos
-
-Las tareas, enlaces, tema y auditoría se guardan localmente en el navegador. La sección Configuración permite exportar e importar respaldos JSON.
+Sirve la raíz del repositorio mediante HTTP para la prueba de navegador. Abrir `index.html` como archivo local no es compatible con la autenticación.
