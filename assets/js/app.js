@@ -5,7 +5,7 @@ import {
 
 const { createClient } = globalThis.supabase || {};
 
-const APP_VERSION = "1.9.2";
+const APP_VERSION = "2.0.0";
 const STORAGE_PREFIX = "besPortalState_v1_7_0";
 const MAX_BACKUP_BYTES = 1_000_000;
 const CONFIG_READY =
@@ -88,6 +88,9 @@ const LINK_LABELS = {
 const TITLES = {
   dashboard: "Resumen operativo",
   mastermap: "Mapa Maestro BES",
+  organization: "Organización y mando",
+  processes: "Mapa de áreas y procesos",
+  dataflow: "Gobernanza Odoo ↔ BL RACKS",
   governance: "Gobierno BES",
   tasks: "Agenda operativa",
   warehouse: "Almacenes BL1–BL5",
@@ -113,16 +116,19 @@ const MODULES = [
   "Dirección General",
 ];
 const MODULE_RECOVERY = {
-  11: {
-    status: "Expediente listo",
-    detail:
-      "Nueve perfiles, solicitudes, RACI/KPI y roadmap 30/60/90 preparados para autorización, con actividades y controles detallados.",
-  },
-  13: {
-    status: "Contenido avanzado",
-    detail:
-      "Presentación ejecutiva de 13 diapositivas validada visualmente; aprobación de Dirección General pendiente.",
-  },
+  1: { status: "Estructura integrada", detail: "Metodología rectora alineada con estrategia, procesos, personas, tecnología y mejora continua; desarrollo documental pendiente." },
+  2: { status: "Estructura integrada", detail: "Modelo integral de gestión operativa incorporado como capa de ejecución; liberación documental pendiente." },
+  3: { status: "Estructura integrada", detail: "Cadena de suministro y operación transversal mapeadas de Compras a Atención al Cliente." },
+  4: { status: "Estructura integrada", detail: "Odoo definido como sistema maestro para compras e inventario dentro del mapa de información." },
+  5: { status: "Estructura integrada", detail: "BL RACKS definido como sistema operativo para ETA, racks, recepción y trazabilidad." },
+  6: { status: "Estructura integrada", detail: "Propiedad, validación y consumo de siete objetos de datos Odoo–BL RACKS documentados." },
+  7: { status: "Estructura integrada", detail: "KPIs corporativos y departamentales incorporados al modelo; fuentes productivas pendientes." },
+  8: { status: "Estructura integrada", detail: "Calidad, auditoría, evidencias y conciliaciones incorporadas como controles transversales." },
+  9: { status: "Estructura integrada", detail: "5S, Kaizen, Ishikawa, 5 Porqués y mejora continua ubicados en la arquitectura." },
+  10: { status: "Estructura integrada", detail: "Filosofía de aprendizaje y transformación de procesos incorporada al gobierno BES." },
+  11: { status: "Estructura integrada", detail: "Jerarquía, gerencias, jefaturas, supervisiones y puestos especializados integrados; autorizaciones pendientes." },
+  12: { status: "Estructura integrada", detail: "Código oficial, 17 tipos documentales, 10 secciones y formato gráfico obligatorio definidos." },
+  13: { status: "Estructura integrada", detail: "Dirección General y Gerencia Senior ubicadas como máximo nivel de estrategia, rentabilidad y recursos." },
 };
 const GOVERNANCE_DOCS = [
   "Manual de Gobierno BES",
@@ -590,12 +596,13 @@ function renderArchitecture() {
       index === 0 || recovered
         ? `<button class="btn secondary" data-module-go="${destination}">${index === 0 ? "Abrir módulo" : "Ver evidencia"}</button>`
         : "";
-    return `<article class="card module-card ${index === 0 ? "building" : "pending"}">
-      <span class="module-code">Módulo ${String(index).padStart(2, "0")}</span>
+    const cardClass = index === 0 ? "building" : recovered ? "structured" : "pending";
+    return `<article class="card module-card ${cardClass}">
+      <span class="module-code">Pilar ${String(index).padStart(2, "0")}</span>
       <h3>${name}</h3>
       <p>${detail}</p>
       <div class="module-state">
-        <span class="state-pill ${index === 0 ? "building" : ""}">${status}</span>
+        <span class="state-pill ${cardClass}">${status}</span>
         <span class="release-no">No liberado</span>
       </div>
       ${button}
