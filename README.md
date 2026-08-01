@@ -25,3 +25,4 @@ node tests/smoke.mjs
 ```
 
 Sirve la raíz del repositorio mediante HTTP para la prueba de navegador. Abrir `index.html` como archivo local no es compatible con la autenticación.
+    
