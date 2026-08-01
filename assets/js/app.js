@@ -5,7 +5,7 @@ import {
 
 const { createClient } = globalThis.supabase || {};
 
-const APP_VERSION = "1.9.0";
+const APP_VERSION = "2.0.0";
 const STORAGE_PREFIX = "besPortalState_v1_7_0";
 const MAX_BACKUP_BYTES = 1_000_000;
 const CONFIG_READY =
@@ -88,6 +88,9 @@ const LINK_LABELS = {
 const TITLES = {
   dashboard: "Resumen operativo",
   mastermap: "Mapa Maestro BES",
+  organization: "Organización y mando",
+  processes: "Mapa de áreas y procesos",
+  dataflow: "Gobernanza Odoo ↔ BL RACKS",
   governance: "Gobierno BES",
   tasks: "Agenda operativa",
   warehouse: "Almacenes BL1–BL5",
@@ -113,16 +116,19 @@ const MODULES = [
   "Dirección General",
 ];
 const MODULE_RECOVERY = {
-  11: {
-    status: "Expediente listo",
-    detail:
-      "Nueve perfiles, solicitudes, RACI/KPI y roadmap 30/60/90 preparados para autorización, con actividades y controles detallados.",
-  },
-  13: {
-    status: "Contenido avanzado",
-    detail:
-      "Presentación ejecutiva de 13 diapositivas validada visualmente; aprobación de Dirección General pendiente.",
-  },
+  1: { status: "Estructura integrada", detail: "Metodología rectora alineada con estrategia, procesos, personas, tecnología y mejora continua; desarrollo documental pendiente." },
+  2: { status: "Estructura integrada", detail: "Modelo integral de gestión operativa incorporado como capa de ejecución; liberación documental pendiente." },
+  3: { status: "Estructura integrada", detail: "Cadena de suministro y operación transversal mapeadas de Compras a Atención al Cliente." },
+  4: { status: "Estructura integrada", detail: "Odoo definido como sistema maestro para compras e inventario dentro del mapa de información." },
+  5: { status: "Estructura integrada", detail: "BL RACKS definido como sistema operativo para ETA, racks, recepción y trazabilidad." },
+  6: { status: "Estructura integrada", detail: "Propiedad, validación y consumo de siete objetos de datos Odoo–BL RACKS documentados." },
+  7: { status: "Estructura integrada", detail: "KPIs corporativos y departamentales incorporados al modelo; fuentes productivas pendientes." },
+  8: { status: "Estructura integrada", detail: "Calidad, auditoría, evidencias y conciliaciones incorporadas como controles transversales." },
+  9: { status: "Estructura integrada", detail: "5S, Kaizen, Ishikawa, 5 Porqués y mejora continua ubicados en la arquitectura." },
+  10: { status: "Estructura integrada", detail: "Filosofía de aprendizaje y transformación de procesos incorporada al gobierno BES." },
+  11: { status: "Estructura integrada", detail: "Jerarquía, gerencias, jefaturas, supervisiones y puestos especializados integrados; autorizaciones pendientes." },
+  12: { status: "Estructura integrada", detail: "Código oficial, 17 tipos documentales, 10 secciones y formato gráfico obligatorio definidos." },
+  13: { status: "Estructura integrada", detail: "Dirección General y Gerencia Senior ubicadas como máximo nivel de estrategia, rentabilidad y recursos." },
 };
 const GOVERNANCE_DOCS = [
   "Manual de Gobierno BES",
@@ -187,6 +193,8 @@ let taskFilter = "all";
 let authEvaluation = 0;
 let enrollmentFactorId = null;
 let challengeFactorId = null;
+let managedUsers = [];
+let managedUsersLoading = false;
 
 function select(selector) {
   return document.querySelector(selector);
@@ -221,6 +229,7 @@ function createDefaultState(profile) {
   return {
     version: APP_VERSION,
     profile,
+    lastPage: "dashboard",
     tasks: structuredClone(DEFAULT_TASKS),
     links: { ...DEFAULT_LINKS },
     governance: defaultGovernance(),
@@ -237,6 +246,7 @@ function loadState(userId, profile) {
         ...saved,
         version: APP_VERSION,
         profile,
+        lastPage: Object.hasOwn(TITLES, saved.lastPage) ? saved.lastPage : "dashboard",
         links: normalizeLinks(saved.links),
         governance: normalizeGovernance(saved.governance),
         audit: normalizeAudit(saved.audit, profile.name),
@@ -484,8 +494,11 @@ function showPage(id) {
     button.classList.toggle("active", button.dataset.page === id),
   );
   select("#pageTitle").textContent = TITLES[id];
+  state.lastPage = id;
+  persist();
   select("#sidebar").classList.remove("open");
   window.scrollTo(0, 0);
+  if (id === "users") void loadManagedUsers();
 }
 
 function exportData() {
@@ -583,12 +596,13 @@ function renderArchitecture() {
       index === 0 || recovered
         ? `<button class="btn secondary" data-module-go="${destination}">${index === 0 ? "Abrir módulo" : "Ver evidencia"}</button>`
         : "";
-    return `<article class="card module-card ${index === 0 ? "building" : "pending"}">
-      <span class="module-code">Módulo ${String(index).padStart(2, "0")}</span>
+    const cardClass = index === 0 ? "building" : recovered ? "structured" : "pending";
+    return `<article class="card module-card ${cardClass}">
+      <span class="module-code">Pilar ${String(index).padStart(2, "0")}</span>
       <h3>${name}</h3>
       <p>${detail}</p>
       <div class="module-state">
-        <span class="state-pill ${index === 0 ? "building" : ""}">${status}</span>
+        <span class="state-pill ${cardClass}">${status}</span>
         <span class="release-no">No liberado</span>
       </div>
       ${button}
@@ -768,6 +782,8 @@ function clearRuntimeIdentity() {
   accessContext = null;
   activeAccess = null;
   state = null;
+  managedUsers = [];
+  managedUsersLoading = false;
   authEvaluation += 1;
 }
 
@@ -792,6 +808,7 @@ function translateAuthError(error) {
       "La contraseña temporal expiró. Solicita una nueva al propietario.",
     membership_required: "La identidad no tiene una membresía BES activa.",
     invalid_session: "La sesión expiró. Inicia sesión nuevamente.",
+    identity_gateway_unavailable: "No fue posible consultar el directorio de usuarios. Inténtalo nuevamente.",
     owner_required: "Solo el propietario BES puede crear usuarios.",
     owner_or_admin_required: "Solo el propietario BES puede crear usuarios.",
     login_id_already_exists: "Ese usuario corporativo ya existe.",
@@ -1092,7 +1109,13 @@ async function changePassword(event) {
 function enterPortal() {
   renderAll();
   showAuthSurface("appView");
-  showPage("dashboard");
+  const destination =
+    Object.hasOwn(TITLES, state.lastPage) &&
+    (state.lastPage !== "users" || isOwner())
+      ? state.lastPage
+      : "dashboard";
+  showPage(destination);
+  if (isOwner()) void loadManagedUsers();
 }
 
 async function signIn(event) {
@@ -1122,6 +1145,79 @@ async function signIn(event) {
     select("#loginError").textContent = translateAuthError(error);
   } finally {
     button.disabled = false;
+  }
+}
+
+function formatUserDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString("es-MX");
+}
+
+function managedCredentialLabel(user) {
+  if (user.membership_status !== "active") return "Membresía inactiva";
+  const labels = {
+    active: "Activa",
+    temporary: "Pendiente de activación",
+    reset_required: "Cambio requerido",
+    locked: "Bloqueada",
+    disabled: "Deshabilitada",
+  };
+  return labels[user.credential_state] || user.credential_state || "Sin estado";
+}
+
+function renderManagedUsers() {
+  const rows = select("#managedUsersRows");
+  const empty = select("#managedUsersEmpty");
+  const count = select("#managedUsersCount");
+  if (!rows || !empty || !count) return;
+  count.textContent = managedUsers.length === 1 ? "1 usuario" : String(managedUsers.length) + " usuarios";
+  rows.innerHTML = managedUsers.map((user) => {
+    const active = user.membership_status === "active" && user.credential_state === "active";
+    return '<tr>' +
+      '<td><b>' + escapeHTML(user.login_id || "—") + '</b></td>' +
+      '<td>' + escapeHTML(user.full_name || user.preferred_name || "—") + '</td>' +
+      '<td>' + escapeHTML(roleLabel(user)) + '</td>' +
+      '<td><span class="user-state ' + (active ? "active" : "pending") + '">' + escapeHTML(managedCredentialLabel(user)) + '</span></td>' +
+      '<td>' + (user.must_change_password ? "Pendiente" : "Completado") + '</td>' +
+      '<td>' + escapeHTML(formatUserDate(user.created_at)) + '</td>' +
+      '<td>' + escapeHTML(formatUserDate(user.last_login_at)) + '</td>' +
+      '</tr>';
+  }).join("");
+  empty.classList.toggle("hidden", managedUsers.length > 0);
+  if (!managedUsers.length) empty.textContent = "No hay usuarios registrados en esta organización.";
+}
+
+async function loadManagedUsers() {
+  if (!isOwner() || managedUsersLoading) return;
+  const refreshButton = select("#refreshUsers");
+  const empty = select("#managedUsersEmpty");
+  managedUsersLoading = true;
+  if (refreshButton) refreshButton.disabled = true;
+  if (empty && !managedUsers.length) {
+    empty.classList.remove("hidden");
+    empty.textContent = "Cargando usuarios registrados…";
+  }
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
+      throw Object.assign(new Error("La sesión expiró."), { code: "invalid_session" });
+    }
+    const result = await callBesEdge(
+      "bes-admin-users",
+      { action: "list", organization: activeAccess.organization_code || "BEST-LINEN" },
+      session.access_token,
+    );
+    managedUsers = Array.isArray(result.data?.users) ? result.data.users : [];
+    renderManagedUsers();
+  } catch (error) {
+    if (empty) {
+      empty.classList.remove("hidden");
+      empty.textContent = translateAuthError(error);
+    }
+  } finally {
+    managedUsersLoading = false;
+    if (refreshButton) refreshButton.disabled = false;
   }
 }
 
@@ -1159,7 +1255,6 @@ async function provisionUser(event) {
         job_title: select("#newJobTitle").value.trim(),
         role_code: select("#newRoleCode").value,
         additional_roles: [],
-        expires_in_hours: Number(select("#newExpiryHours").value),
       },
       session.access_token,
     );
@@ -1169,10 +1264,11 @@ async function provisionUser(event) {
     select("#provisionedTemporaryPassword").textContent =
       provisioned.temporary_password || "";
     select("#provisionedExpiry").textContent =
-      `Vence: ${provisioned.temporary_password_expires_at ? new Date(provisioned.temporary_password_expires_at).toLocaleString("es-MX") : "—"}`;
+      "Sin caducidad · cambio obligatorio únicamente en el primer ingreso";
     resultView.classList.remove("hidden");
     select("#provisionUserForm").reset();
     logEvent(`Creó el usuario controlado ${provisioned.login_id || ""}`);
+    await loadManagedUsers();
     toast("Usuario creado; entrega la credencial por canales separados");
   } catch (error) {
     message.textContent = translateAuthError(error);
@@ -1200,6 +1296,7 @@ function bindEvents() {
   select("#mfaLogout").onclick = signOut;
   select("#passwordForm").addEventListener("submit", changePassword);
   select("#provisionUserForm").addEventListener("submit", provisionUser);
+  select("#refreshUsers").onclick = () => void loadManagedUsers();
   select("#mfaEnrollBtn").onclick = startMfaEnrollment;
   select("#mfaSetupForm").addEventListener("submit", (event) => {
     event.preventDefault();
