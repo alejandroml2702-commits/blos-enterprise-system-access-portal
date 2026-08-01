@@ -5,7 +5,7 @@ import {
 
 const { createClient } = globalThis.supabase || {};
 
-const APP_VERSION = "2.0.0";
+const APP_VERSION = "2.0.1";
 const STORAGE_PREFIX = "besPortalState_v1_7_0";
 const MAX_BACKUP_BYTES = 1_000_000;
 const CONFIG_READY =
@@ -1255,6 +1255,7 @@ async function provisionUser(event) {
         job_title: select("#newJobTitle").value.trim(),
         role_code: select("#newRoleCode").value,
         additional_roles: [],
+        expires_in_hours: Number(select("#newExpiryHours").value),
       },
       session.access_token,
     );
@@ -1264,7 +1265,7 @@ async function provisionUser(event) {
     select("#provisionedTemporaryPassword").textContent =
       provisioned.temporary_password || "";
     select("#provisionedExpiry").textContent =
-      "Sin caducidad · cambio obligatorio únicamente en el primer ingreso";
+      `Vence: ${provisioned.temporary_password_expires_at ? new Date(provisioned.temporary_password_expires_at).toLocaleString("es-MX") : "—"}`;
     resultView.classList.remove("hidden");
     select("#provisionUserForm").reset();
     logEvent(`Creó el usuario controlado ${provisioned.login_id || ""}`);
