@@ -476,13 +476,14 @@
           <div class="provisioning-grid">
             <form id="provisionUserForm" class="card provisioning-card">
               <h3>Crear acceso controlado</h3>
-              <p>La contraseña temporal se muestra una sola vez y no caduca. El usuario deberá reemplazarla únicamente en su primer ingreso.</p>
+              <p>La contraseña temporal se muestra una sola vez y vencerá. El usuario deberá reemplazarla antes de entrar a cualquier módulo.</p>
               <div class="field"><label for="newLoginId">Usuario corporativo</label><input id="newLoginId" name="login_id" autocomplete="off" minlength="5" maxlength="80" required></div>
               <div class="field"><label for="newFullName">Nombre completo</label><input id="newFullName" name="full_name" autocomplete="off" minlength="2" maxlength="120" required></div>
               <div class="field"><label for="newPreferredName">Nombre preferido</label><input id="newPreferredName" name="preferred_name" autocomplete="off" maxlength="80"></div>
               <div class="field"><label for="newEmployeeCode">Clave de empleado</label><input id="newEmployeeCode" name="employee_code" autocomplete="off" maxlength="40"></div>
               <div class="field"><label for="newJobTitle">Puesto</label><input id="newJobTitle" name="job_title" autocomplete="off" minlength="2" maxlength="120" required></div>
               <div class="field"><label for="newRoleCode">Rol BES</label><select id="newRoleCode" name="role_code" required><option value="viewer">Consulta</option><option value="operator">Operador</option><option value="analyst">Analista</option><option value="auditor">Auditor</option><option value="manager">Responsable de área</option><option value="architect">Arquitecto BES</option><option value="admin">Administrador</option></select></div>
+              <div class="field"><label for="newExpiryHours">Vigencia de contraseña temporal</label><select id="newExpiryHours" name="expires_in_hours"><option value="24">24 horas</option><option value="48">48 horas</option><option value="72">72 horas</option></select></div>
               <button id="provisionUserSubmit" class="btn full" type="submit">Crear usuario</button>
               <div id="provisionUserMessage" class="error" role="alert" aria-live="polite"></div>
             </form>
@@ -524,6 +525,6 @@
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="assets/js/supabase.umd.js"></script>
-  <script type="module" src="assets/js/app.js?v=2.0.0"></script>
+  <script type="module" src="assets/js/app.js?v=2.0.1"></script>
 </body>
 </html>
