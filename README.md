@@ -1,5 +1,4 @@
 # BES Access Portal
-
 Portal de acceso del BLOS Enterprise System para Best Linen.
 
 ## Seguridad
@@ -11,7 +10,7 @@ Portal de acceso del BLOS Enterprise System para Best Linen.
 - MFA obligatorio para roles privilegiados.
 - Perfiles, membresías y datos institucionales protegidos mediante RLS y funciones autenticadas.
 
-La clave incluida en `assets/js/supabase-config.js` es publicable y apta para navegador. Nunca debe agregarse una clave `service_role` o secreta al repositorio.
+La clave incluida en `assets/js/supe-config.js` es publicable y apta para navegador. Nunca debe agregarse una clave `service_role` o secreta al repositorio.
 
 ## Alcance BES
 
